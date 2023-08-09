@@ -12,4 +12,22 @@ func newToken(typ int, value string) *token {
 
 const (
 	numberType = iota
+
+	addType
+	subType
+	mulType
+	divType
+	lParenType
+	rParenType
+	semicolonType
 )
+
+var operators = map[string]int{
+	"+": addType,
+	"-": subType,
+	"*": mulType,
+	"/": divType,
+	"(": lParenType,
+	")": rParenType,
+	";": semicolonType,
+}

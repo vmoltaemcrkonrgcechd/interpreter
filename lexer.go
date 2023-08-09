@@ -27,6 +27,7 @@ func (l *lexer) parse() ([]*token, error) {
 			l.cursor++
 			continue
 		} else if tok = l.parseNumber(); tok != nil {
+		} else if tok = l.parseOperator(); tok != nil {
 		} else {
 			// todo: добавить вывод позиции символа.
 			return nil, errors.New("неизвестный символ: " + string(l.source[l.cursor]))
@@ -61,7 +62,7 @@ func (l *lexer) parseNumber() *token {
 	}
 
 	// если число пустое.
-	if len(number) == 0 ||
+	if number == nil ||
 		// если число начинается с нуля и после него идут другие символы кроме точки.
 		(number[0] == '0' && len(number) > 1 && number[1] != '.') ||
 		// если число начинается или заканчивается точкой.
@@ -71,4 +72,45 @@ func (l *lexer) parseNumber() *token {
 	}
 
 	return newToken(numberType, string(number))
+}
+
+func (l *lexer) parseOperator() *token {
+	var (
+		operator    []rune
+		startCursor = l.cursor
+	)
+
+label:
+	for l.cursor < len(l.source) {
+		switch l.source[l.cursor] {
+		// символы, которые сами являются операторами и не могут накапливаться.
+		case '(', ')', ';':
+			// если оператор уже накоплен, то курсор не перемещается и этот символ
+			// будет прочитан при следующем запуске этой функции.
+			if operator != nil {
+				break label
+			}
+			tok := newToken(operators[string(l.source[l.cursor])], "")
+			l.cursor++
+			return tok
+
+		// символы, которые сами являются операторами, но также могут накапливаться.
+		case '+', '-', '*', '/':
+			operator = append(operator, l.source[l.cursor])
+			l.cursor++
+
+		default:
+			break label
+		}
+	}
+
+	operatorType, ok := operators[string(operator)]
+	// если был накоплен неизвестный оператор,
+	// то курсор возвращается в исходное состояние и результатом функции будет nil.
+	if !ok {
+		l.cursor = startCursor
+		return nil
+	}
+
+	return newToken(operatorType, "")
 }
