@@ -11,7 +11,9 @@ func newToken(typ int, value string) *token {
 }
 
 const (
-	numberType = iota
+	blockType = iota
+
+	numberType
 
 	addType
 	subType

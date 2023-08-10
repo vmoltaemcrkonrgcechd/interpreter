@@ -1,7 +1,17 @@
 package main
 
+import (
+	"log"
+)
+
 func main() {
 	input := ``
 
-	_, _ = newLexer([]byte(input)).parse()
+	tokens, err := newLexer([]byte(input)).parse()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	newInterpreter().interpret(newParser(tokens).parse())
 }
