@@ -35,6 +35,8 @@ func (i *interpreter) interpret(root *node) string {
 	case divType:
 		return fmt.Sprintf("%f", i.parseFloat(i.interpret(root.children[0]))/i.parseFloat(i.interpret(root.children[1])))
 
+	case unarySubType:
+		return fmt.Sprintf("-%f", i.parseFloat(i.interpret(root.children[0])))
 	}
 
 	return ""

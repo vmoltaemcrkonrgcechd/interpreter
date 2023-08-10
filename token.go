@@ -17,6 +17,7 @@ const (
 
 	addType
 	subType
+	unarySubType
 	mulType
 	divType
 	lParenType

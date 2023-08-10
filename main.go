@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	input := `10; 20 * (20 + 30*40/(10*5)) / 25`
+	input := `2* -2`
 
 	tokens, err := newLexer([]byte(input)).parse()
 

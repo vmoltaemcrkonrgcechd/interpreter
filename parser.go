@@ -33,8 +33,13 @@ func (p *parser) parse() *node {
 }
 
 func (p *parser) parseExpression() *node {
-	root := p.parseMulAndDiv()
+	var (
+		root        = p.parseMulAndDiv()
+		startCursor = p.cursor
+	)
+
 	if root == nil {
+		p.cursor = startCursor
 		return nil
 	}
 	for p.cursor < len(p.tokens) && p.tokens[p.cursor].typ != semicolonType {
@@ -48,6 +53,7 @@ func (p *parser) parseExpression() *node {
 
 		right := p.parseMulAndDiv()
 		if right == nil {
+			p.cursor = startCursor
 			return nil
 		}
 
@@ -96,6 +102,13 @@ func (p *parser) parseLiteral() *node {
 		case numberType:
 			defer func() { p.cursor++ }()
 			return newNode(numberType, p.tokens[p.cursor].value)
+		case subType:
+			p.cursor++
+			literal := p.parseLiteral()
+			if literal == nil {
+				break
+			}
+			return newNode(unarySubType, "", literal)
 		}
 	}
 
