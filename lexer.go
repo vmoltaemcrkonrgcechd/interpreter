@@ -28,6 +28,7 @@ func (l *lexer) parse() ([]*token, error) {
 			continue
 		} else if tok = l.parseNumber(); tok != nil {
 		} else if tok = l.parseOperator(); tok != nil {
+		} else if tok = l.parseIdent(); tok != nil {
 		} else {
 			// todo: добавить вывод позиции символа.
 			return nil, errors.New("неизвестный символ: " + string(l.source[l.cursor]))
@@ -95,7 +96,7 @@ label:
 			return tok
 
 		// символы, которые сами являются операторами, но также могут накапливаться.
-		case '+', '-', '*', '/':
+		case '+', '-', '*', '/', '=':
 			operator = append(operator, l.source[l.cursor])
 			l.cursor++
 
@@ -113,4 +114,37 @@ label:
 	}
 
 	return newToken(operatorType, "")
+}
+
+func (l *lexer) parseIdent() *token {
+	var (
+		ident       []rune
+		startCursor = l.cursor
+	)
+
+	for l.cursor < len(l.source) {
+		if unicode.IsLetter(l.source[l.cursor]) ||
+			l.source[l.cursor] == '_' ||
+			(len(ident) != 0 && unicode.IsDigit(l.source[l.cursor])) {
+			ident = append(ident, l.source[l.cursor])
+			l.cursor++
+			continue
+		}
+
+		break
+	}
+
+	if ident == nil {
+		l.cursor = startCursor
+		return nil
+	}
+
+	typ := identType
+
+	keyword, ok := keywords[string(ident)]
+	if ok {
+		typ = keyword
+	}
+
+	return newToken(typ, string(ident))
 }

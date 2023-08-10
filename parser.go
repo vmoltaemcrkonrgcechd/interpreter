@@ -22,6 +22,8 @@ func (p *parser) parse() *node {
 			continue
 		} else if child = p.parseExpression(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
+		} else if child = p.parseVariableDeclaration(); child != nil && (p.cursor >= len(p.tokens) ||
+			p.tokens[p.cursor].typ == semicolonType) {
 		} else {
 			panic("не удалось разобрать выражение")
 		}
@@ -102,6 +104,9 @@ func (p *parser) parseLiteral() *node {
 		case numberType:
 			defer func() { p.cursor++ }()
 			return newNode(numberType, p.tokens[p.cursor].value)
+		case identType:
+			defer func() { p.cursor++ }()
+			return newNode(identType, p.tokens[p.cursor].value)
 		case subType:
 			p.cursor++
 			literal := p.parseLiteral()
@@ -110,6 +115,36 @@ func (p *parser) parseLiteral() *node {
 			}
 			return newNode(unarySubType, "", literal)
 		}
+	}
+
+	return nil
+}
+
+func (p *parser) parseVariableDeclaration() *node {
+	startCursor := p.cursor
+
+	if p.cursor+1 < len(p.tokens) &&
+		p.tokens[p.cursor].typ == letType &&
+		p.tokens[p.cursor+1].typ == identType {
+		variableName := p.tokens[p.cursor+1].value
+		p.cursor += 2
+		if p.cursor < len(p.tokens) && p.tokens[p.cursor].typ != semicolonType {
+			if p.tokens[p.cursor].typ == assignType {
+				p.cursor++
+
+				right := p.parseExpression()
+				if right == nil {
+					p.cursor = startCursor
+					return nil
+				}
+
+				return newNode(letType, variableName, right)
+			}
+
+			return nil
+		}
+
+		return newNode(letType, variableName)
 	}
 
 	return nil

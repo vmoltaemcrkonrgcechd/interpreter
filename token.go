@@ -13,6 +13,7 @@ func newToken(typ int, value string) *token {
 const (
 	blockType = iota
 
+	identType
 	numberType
 
 	addType
@@ -23,6 +24,10 @@ const (
 	lParenType
 	rParenType
 	semicolonType
+
+	assignType
+
+	letType
 )
 
 var operators = map[string]int{
@@ -33,4 +38,9 @@ var operators = map[string]int{
 	"(": lParenType,
 	")": rParenType,
 	";": semicolonType,
+	"=": assignType,
+}
+
+var keywords = map[string]int{
+	"let": letType,
 }
