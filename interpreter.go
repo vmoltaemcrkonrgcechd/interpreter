@@ -42,7 +42,11 @@ func (i *interpreter) interpret(root *node) string {
 }
 
 func (i *interpreter) parseFloat(value string) float64 {
-	number, _ := strconv.ParseFloat(value, 32)
+	number, err := strconv.ParseFloat(value, 32)
+
+	if err != nil {
+		panic(err)
+	}
 
 	return number
 }
