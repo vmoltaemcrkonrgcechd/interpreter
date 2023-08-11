@@ -246,7 +246,15 @@ func (p *parser) parseFunctionDeclaration() *node {
 			return nil
 		}
 
-		p.cursor += 2
+		p.cursor++
+
+		arguments := p.parseArguments()
+		if arguments == nil {
+			p.cursor = startCursor
+			return nil
+		}
+
+		p.cursor++
 
 		if p.cursor+1 >= len(p.tokens) || p.tokens[p.cursor].typ != lBraceType {
 			p.cursor = startCursor
@@ -263,7 +271,7 @@ func (p *parser) parseFunctionDeclaration() *node {
 
 		p.cursor++
 
-		root.children = append(root.children, body)
+		root.children = append(root.children, body, arguments)
 		return root
 	}
 
@@ -278,4 +286,33 @@ func (p *parser) parseFunctionCall() *node {
 	}
 
 	return nil
+}
+
+func (p *parser) parseArguments() *node {
+	var (
+		arguments   = newNode(argumentsType, "")
+		startCursor = p.cursor
+	)
+
+	for p.cursor < len(p.tokens) && p.tokens[p.cursor].typ != rParenType {
+		if p.tokens[p.cursor].typ == commaType {
+			p.cursor++
+			continue
+		}
+
+		if p.tokens[p.cursor].typ != identType {
+			p.cursor = startCursor
+			return nil
+		}
+
+		arguments.children = append(arguments.children, newNode(identType, p.tokens[p.cursor].value))
+		p.cursor++
+	}
+
+	if p.cursor >= len(p.tokens) {
+		p.cursor = startCursor
+		return nil
+	}
+
+	return arguments
 }

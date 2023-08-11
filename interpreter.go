@@ -76,14 +76,21 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 		return newValue(boolType, result, nil)
 
 	case funType:
-		ctx.namespace[root.value] = newValue(funcType, "", root.children[0])
+		ctx.namespace[root.value] = newValue(funcType, "", root.children[0], root.children[1])
 
 	case functionCallType:
 		fun, ok := ctx.find(root.value)
 		if !ok {
 			panic("неизвестный идентификатор:" + root.value)
 		}
-		return i.interpret(fun.body, ctx)
+
+		tempContext := newContext(ctx)
+
+		for _, arg := range fun.arguments.children {
+			tempContext.namespace[arg.value] = newValue(numType, 0, nil)
+		}
+
+		return i.interpret(fun.body, tempContext)
 	}
 
 	return nil

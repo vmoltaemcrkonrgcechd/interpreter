@@ -27,6 +27,7 @@ const (
 	rBraceType
 	eqlType
 	semicolonType
+	commaType
 
 	assignType
 
@@ -34,6 +35,7 @@ const (
 	ifType
 	funType
 	functionCallType
+	argumentsType
 )
 
 var operators = map[string]int{
@@ -47,6 +49,7 @@ var operators = map[string]int{
 	"=":  assignType,
 	"{":  lBraceType,
 	"}":  rBraceType,
+	",":  commaType,
 	"==": eqlType,
 }
 
