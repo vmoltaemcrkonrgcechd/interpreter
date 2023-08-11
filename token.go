@@ -32,7 +32,8 @@ const (
 
 	letType
 	ifType
-	elseType
+	funType
+	functionCallType
 )
 
 var operators = map[string]int{
@@ -50,7 +51,7 @@ var operators = map[string]int{
 }
 
 var keywords = map[string]int{
-	"let":  letType,
-	"if":   ifType,
-	"else": elseType,
+	"let": letType,
+	"if":  ifType,
+	"fun": funType,
 }

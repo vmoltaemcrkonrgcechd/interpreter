@@ -28,7 +28,11 @@ func (p *parser) parse() *node {
 			return root
 		} else if child = p.parseVariableRedefinition(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
+		} else if child = p.parseFunctionCall(); child != nil && (p.cursor >= len(p.tokens) ||
+			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseBranching(); child != nil && (p.cursor >= len(p.tokens) ||
+			p.tokens[p.cursor].typ == semicolonType) {
+		} else if child = p.parseFunctionDeclaration(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseExpression(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
@@ -224,5 +228,54 @@ func (p *parser) parseBranching() *node {
 		p.cursor++
 		return newNode(ifType, "", condition, body)
 	}
+	return nil
+}
+
+func (p *parser) parseFunctionDeclaration() *node {
+	startCursor := p.cursor
+
+	if p.cursor+1 < len(p.tokens) &&
+		p.tokens[p.cursor].typ == funType &&
+		p.tokens[p.cursor+1].typ == identType {
+
+		root := newNode(funType, p.tokens[p.cursor+1].value)
+		p.cursor += 2
+
+		if p.cursor+1 >= len(p.tokens) || p.tokens[p.cursor].typ != lParenType {
+			p.cursor = startCursor
+			return nil
+		}
+
+		p.cursor += 2
+
+		if p.cursor+1 >= len(p.tokens) || p.tokens[p.cursor].typ != lBraceType {
+			p.cursor = startCursor
+			return nil
+		}
+
+		p.cursor++
+
+		body := p.parse()
+		if body == nil || p.cursor >= len(p.tokens) || p.tokens[p.cursor].typ != rBraceType {
+			p.cursor = startCursor
+			return nil
+		}
+
+		p.cursor++
+
+		root.children = append(root.children, body)
+		return root
+	}
+
+	return nil
+}
+
+func (p *parser) parseFunctionCall() *node {
+	if p.tokens[p.cursor].typ == identType && p.tokens[p.cursor+1].typ == lParenType {
+		root := newNode(functionCallType, p.tokens[p.cursor].value)
+		p.cursor += 3
+		return root
+	}
+
 	return nil
 }

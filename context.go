@@ -1,38 +1,38 @@
 package main
 
 type context struct {
-	namespace map[string]string
+	namespace map[string]*value
 	parent    *context
 }
 
 func newContext(parent *context) *context {
-	return &context{parent: parent, namespace: make(map[string]string)}
+	return &context{parent: parent, namespace: make(map[string]*value)}
 }
 
-func (ctx *context) find(ident string) (string, bool) {
-	value, ok := ctx.namespace[ident]
+func (ctx *context) find(ident string) (*value, bool) {
+	val, ok := ctx.namespace[ident]
 	if ok {
-		return value, true
+		return val, true
 	}
 
 	if ctx.parent != nil {
 		return ctx.parent.find(ident)
 	}
 
-	return "", false
+	return nil, false
 }
 
-func (ctx *context) edit(name, value string) bool {
+func (ctx *context) edit(name string, value any, typ string) bool {
 	_, ok := ctx.namespace[name]
 	if !ok {
 		if ctx.parent != nil {
-			return ctx.parent.edit(name, value)
+			return ctx.parent.edit(name, value, typ)
 		}
 
 		return false
 	}
 
-	ctx.namespace[name] = value
+	ctx.namespace[name] = newValue(typ, value, nil)
 
 	return true
 }

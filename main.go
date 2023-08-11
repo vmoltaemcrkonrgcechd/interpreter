@@ -6,14 +6,19 @@ import (
 
 func main() {
 	input := `
-let number = 10;
-
-if 0 == 0 {
-	let number = 20;
-	number;
+fun bar() {
+	1;
 };
 
-number;
+if 0 == 0 {
+	fun bar() {
+		2;
+	};
+
+	bar();
+};
+
+bar();
 `
 
 	tokens, err := newLexer([]byte(input)).parse()
@@ -23,3 +28,9 @@ number;
 
 	newInterpreter().interpret(newParser(tokens).parse(), nil)
 }
+
+/*
+fun
+ret
+string
+*/

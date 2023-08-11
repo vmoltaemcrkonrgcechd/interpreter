@@ -12,69 +12,81 @@ func newInterpreter() *interpreter {
 	return &interpreter{}
 }
 
-func (i *interpreter) interpret(root *node, ctx *context) string {
+func (i *interpreter) interpret(root *node, ctx *context) *value {
 
 	switch root.typ {
 	case blockType:
 		newCtx := newContext(ctx)
 		for _, child := range root.children {
-			fmt.Println(i.interpret(child, newCtx))
+			val := i.interpret(child, newCtx)
+			if val != nil {
+				fmt.Println(val.val)
+			}
 		}
 
 	case numberType:
-		return root.value
+		return newValue(numType, i.parseFloat(root.value), nil)
 
 	case identType:
-		value, ok := ctx.find(root.value)
+		val, ok := ctx.find(root.value)
 		if !ok {
 			panic("неизвестный идентификатор: " + root.value)
 		}
-		return value
+		return val
 
 	case addType:
-		return fmt.Sprintf("%f", i.parseFloat(i.interpret(root.children[0], ctx))+i.parseFloat(i.interpret(root.children[1], ctx)))
+		return newValue(numType, i.interpret(root.children[0], ctx).val.(float64)+i.interpret(root.children[1], ctx).val.(float64), nil)
 
 	case subType:
-		return fmt.Sprintf("%f", i.parseFloat(i.interpret(root.children[0], ctx))-i.parseFloat(i.interpret(root.children[1], ctx)))
+		return newValue(numType, i.interpret(root.children[0], ctx).val.(float64)-i.interpret(root.children[1], ctx).val.(float64), nil)
 
 	case mulType:
-		return fmt.Sprintf("%f", i.parseFloat(i.interpret(root.children[0], ctx))*i.parseFloat(i.interpret(root.children[1], ctx)))
+		return newValue(numType, i.interpret(root.children[0], ctx).val.(float64)*i.interpret(root.children[1], ctx).val.(float64), nil)
 
 	case divType:
-		return fmt.Sprintf("%f", i.parseFloat(i.interpret(root.children[0], ctx))/i.parseFloat(i.interpret(root.children[1], ctx)))
+		return newValue(numType, i.interpret(root.children[0], ctx).val.(float64)/i.interpret(root.children[1], ctx).val.(float64), nil)
 
 	case unarySubType:
-		return fmt.Sprintf("-%f", i.parseFloat(i.interpret(root.children[0], ctx)))
+		return newValue(numType, -i.interpret(root.children[0], ctx).val.(float64), nil)
 
 	case letType:
-		result := "0"
+		result := 0.0
 		if len(root.children) >= 1 {
-			result = i.interpret(root.children[0], ctx)
+			result = i.interpret(root.children[0], ctx).val.(float64)
 		}
-		ctx.namespace[root.value] = result
-		return result
+		ctx.namespace[root.value] = newValue(numType, result, nil)
+		return nil
 
 	case assignType:
-		ok := ctx.edit(root.value, i.interpret(root.children[0], ctx))
+		ok := ctx.edit(root.value, i.interpret(root.children[0], ctx).val.(float64), numType)
 		if !ok {
 			panic("неизвестный идентификатор:" + root.value)
 		}
-		value, _ := ctx.find(root.value)
-		return value
+		val, _ := ctx.find(root.value)
+		return val
 
 	case ifType:
 		result := i.interpret(root.children[0], ctx)
-		if result == "true" {
+		if result.val.(bool) {
 			i.interpret(root.children[1], ctx)
 		}
 
 	case eqlType:
-		result := i.interpret(root.children[0], ctx) == i.interpret(root.children[1], ctx)
-		return fmt.Sprintf("%t", result)
+		result := i.interpret(root.children[0], ctx).val.(float64) == i.interpret(root.children[1], ctx).val.(float64)
+		return newValue(boolType, result, nil)
+
+	case funType:
+		ctx.namespace[root.value] = newValue(funcType, "", root.children[0])
+
+	case functionCallType:
+		fun, ok := ctx.find(root.value)
+		if !ok {
+			panic("неизвестный идентификатор:" + root.value)
+		}
+		return i.interpret(fun.body, ctx)
 	}
 
-	return ""
-
+	return nil
 }
 
 func (i *interpreter) parseFloat(value string) float64 {
