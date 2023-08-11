@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 // parser - строит абстрактное синтаксическое дерево из последовательности токенов.
 type parser struct {
 	cursor int
@@ -20,6 +22,8 @@ func (p *parser) parse() *node {
 		if p.tokens[p.cursor].typ == semicolonType {
 			p.cursor++
 			continue
+		} else if child = p.parseVariableRedefinition(); child != nil && (p.cursor >= len(p.tokens) ||
+			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseExpression(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseVariableDeclaration(); child != nil && (p.cursor >= len(p.tokens) ||
@@ -145,6 +149,28 @@ func (p *parser) parseVariableDeclaration() *node {
 		}
 
 		return newNode(letType, variableName)
+	}
+
+	return nil
+}
+
+func (p *parser) parseVariableRedefinition() *node {
+	startCursor := p.cursor
+
+	if p.cursor+1 < len(p.tokens) &&
+		p.tokens[p.cursor].typ == identType &&
+		p.tokens[p.cursor+1].typ == assignType {
+		root := newNode(assignType, p.tokens[p.cursor].value)
+		p.cursor += 2
+		expression := p.parseExpression()
+		if expression == nil {
+			p.cursor = startCursor
+			return nil
+		}
+		fmt.Println("expression != nil")
+
+		root.children = append(root.children, expression)
+		return root
 	}
 
 	return nil

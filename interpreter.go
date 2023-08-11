@@ -53,6 +53,14 @@ func (i *interpreter) interpret(root *node, ctx *context) string {
 		}
 		ctx.namespace[root.value] = result
 		return result
+
+	case assignType:
+		_, ok := ctx.namespace[root.value]
+		if !ok {
+			panic("неизвестный идентификатор:" + root.value)
+		}
+		ctx.namespace[root.value] = i.interpret(root.children[0], ctx)
+		return ctx.namespace[root.value]
 	}
 
 	return ""

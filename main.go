@@ -4,13 +4,8 @@ import (
 	"log"
 )
 
-/*
-let number;
-let number = expression;
-number = expression;
-*/
 func main() {
-	input := `let n = 10 * 20; n + 40;`
+	input := ``
 
 	tokens, err := newLexer([]byte(input)).parse()
 	if err != nil {
