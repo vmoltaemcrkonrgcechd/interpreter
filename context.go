@@ -21,3 +21,18 @@ func (ctx *context) find(ident string) (string, bool) {
 
 	return "", false
 }
+
+func (ctx *context) edit(name, value string) bool {
+	_, ok := ctx.namespace[name]
+	if !ok {
+		if ctx.parent != nil {
+			return ctx.parent.edit(name, value)
+		}
+
+		return false
+	}
+
+	ctx.namespace[name] = value
+
+	return true
+}

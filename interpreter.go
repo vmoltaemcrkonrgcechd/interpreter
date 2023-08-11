@@ -55,12 +55,22 @@ func (i *interpreter) interpret(root *node, ctx *context) string {
 		return result
 
 	case assignType:
-		_, ok := ctx.namespace[root.value]
+		ok := ctx.edit(root.value, i.interpret(root.children[0], ctx))
 		if !ok {
 			panic("неизвестный идентификатор:" + root.value)
 		}
-		ctx.namespace[root.value] = i.interpret(root.children[0], ctx)
-		return ctx.namespace[root.value]
+		value, _ := ctx.find(root.value)
+		return value
+
+	case ifType:
+		result := i.interpret(root.children[0], ctx)
+		if result == "true" {
+			i.interpret(root.children[1], ctx)
+		}
+
+	case eqlType:
+		result := i.interpret(root.children[0], ctx) == i.interpret(root.children[1], ctx)
+		return fmt.Sprintf("%t", result)
 	}
 
 	return ""

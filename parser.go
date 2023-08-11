@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"strconv"
+)
 
 // parser - строит абстрактное синтаксическое дерево из последовательности токенов.
 type parser struct {
@@ -22,14 +24,18 @@ func (p *parser) parse() *node {
 		if p.tokens[p.cursor].typ == semicolonType {
 			p.cursor++
 			continue
+		} else if p.tokens[p.cursor].typ == rBraceType {
+			return root
 		} else if child = p.parseVariableRedefinition(); child != nil && (p.cursor >= len(p.tokens) ||
+			p.tokens[p.cursor].typ == semicolonType) {
+		} else if child = p.parseBranching(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseExpression(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseVariableDeclaration(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else {
-			panic("не удалось разобрать выражение")
+			panic("не удалось разобрать выражение: " + strconv.Itoa(p.cursor))
 		}
 
 		root.children = append(root.children, child)
@@ -167,11 +173,56 @@ func (p *parser) parseVariableRedefinition() *node {
 			p.cursor = startCursor
 			return nil
 		}
-		fmt.Println("expression != nil")
 
 		root.children = append(root.children, expression)
 		return root
 	}
 
+	return nil
+}
+
+func (p *parser) parseCondition() *node {
+	startCursor := p.cursor
+
+	left := p.parseExpression()
+	if left == nil || p.cursor >= len(p.tokens) || p.tokens[p.cursor].typ != eqlType {
+		p.cursor = startCursor
+		return nil
+	}
+
+	p.cursor++
+
+	right := p.parseExpression()
+	if right == nil {
+		p.cursor = startCursor
+		return nil
+	}
+
+	return newNode(eqlType, "", left, right)
+}
+
+func (p *parser) parseBranching() *node {
+	startCursor := p.cursor
+
+	if p.tokens[p.cursor].typ == ifType {
+		p.cursor++
+		condition := p.parseCondition()
+		if condition == nil || p.cursor >= len(p.tokens) {
+			p.cursor = startCursor
+			return nil
+		}
+		if p.cursor >= len(p.tokens) || p.tokens[p.cursor].typ != lBraceType {
+			p.cursor = startCursor
+			return nil
+		}
+		p.cursor++
+		body := p.parse()
+		if body == nil || p.cursor >= len(p.tokens) || p.tokens[p.cursor].typ != rBraceType {
+			p.cursor = startCursor
+			return nil
+		}
+		p.cursor++
+		return newNode(ifType, "", condition, body)
+	}
 	return nil
 }

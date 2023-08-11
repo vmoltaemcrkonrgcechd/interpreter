@@ -23,24 +23,34 @@ const (
 	divType
 	lParenType
 	rParenType
+	lBraceType
+	rBraceType
+	eqlType
 	semicolonType
 
 	assignType
 
 	letType
+	ifType
+	elseType
 )
 
 var operators = map[string]int{
-	"+": addType,
-	"-": subType,
-	"*": mulType,
-	"/": divType,
-	"(": lParenType,
-	")": rParenType,
-	";": semicolonType,
-	"=": assignType,
+	"+":  addType,
+	"-":  subType,
+	"*":  mulType,
+	"/":  divType,
+	"(":  lParenType,
+	")":  rParenType,
+	";":  semicolonType,
+	"=":  assignType,
+	"{":  lBraceType,
+	"}":  rBraceType,
+	"==": eqlType,
 }
 
 var keywords = map[string]int{
-	"let": letType,
+	"let":  letType,
+	"if":   ifType,
+	"else": elseType,
 }
