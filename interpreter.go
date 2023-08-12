@@ -86,8 +86,13 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 
 		tempContext := newContext(ctx)
 
-		for _, arg := range fun.arguments.children {
-			tempContext.namespace[arg.value] = newValue(numType, 0, nil)
+		for ind, arg := range fun.arguments.children {
+			val := 0.0
+			if len(root.children) == 1 && len(root.children[0].children) > ind {
+				val = i.interpret(root.children[0].children[ind], ctx).val.(float64)
+			}
+
+			tempContext.namespace[arg.value] = newValue(numType, val, nil)
 		}
 
 		return i.interpret(fun.body, tempContext)

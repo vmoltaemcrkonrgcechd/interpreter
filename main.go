@@ -6,12 +6,16 @@ import (
 
 func main() {
 	input := `
-fun bar(a, b) {
-	a;
-	b;
+let number = 1000;
+
+fun bar(number) {
+	number;
+	if number == 1000 {
+		bar(number - 100);
+	};
 };
 
-bar();
+bar(number);
 `
 
 	tokens, err := newLexer([]byte(input)).parse()

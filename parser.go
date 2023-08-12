@@ -58,7 +58,9 @@ func (p *parser) parseExpression() *node {
 		p.cursor = startCursor
 		return nil
 	}
-	for p.cursor < len(p.tokens) && p.tokens[p.cursor].typ != semicolonType {
+	for p.cursor < len(p.tokens) &&
+		p.tokens[p.cursor].typ != semicolonType &&
+		p.tokens[p.cursor].typ != commaType {
 		if p.tokens[p.cursor].typ != addType && p.tokens[p.cursor].typ != subType {
 			return root
 		}
@@ -279,9 +281,20 @@ func (p *parser) parseFunctionDeclaration() *node {
 }
 
 func (p *parser) parseFunctionCall() *node {
+	startCursor := p.cursor
+
 	if p.tokens[p.cursor].typ == identType && p.tokens[p.cursor+1].typ == lParenType {
 		root := newNode(functionCallType, p.tokens[p.cursor].value)
-		p.cursor += 3
+		p.cursor += 2
+
+		parameters := p.parseParameters()
+		if parameters == nil {
+			p.cursor = startCursor
+			return nil
+		}
+
+		root.children = append(root.children, parameters)
+
 		return root
 	}
 
@@ -315,4 +328,33 @@ func (p *parser) parseArguments() *node {
 	}
 
 	return arguments
+}
+
+func (p *parser) parseParameters() *node {
+	var (
+		arguments   = newNode(argumentsType, "")
+		startCursor = p.cursor
+	)
+
+	for p.cursor < len(p.tokens) {
+		right := p.parseExpression()
+		if right == nil &&
+			p.cursor >= len(p.tokens) &&
+			p.tokens[p.cursor].typ != commaType &&
+			p.tokens[p.cursor].typ != rParenType {
+			p.cursor = startCursor
+			return nil
+		}
+
+		arguments.children = append(arguments.children, right)
+
+		if p.tokens[p.cursor].typ == rParenType {
+			p.cursor++
+			return arguments
+		}
+
+		p.cursor++
+	}
+
+	return nil
 }
