@@ -26,6 +26,7 @@ func (l *lexer) parse() ([]*token, error) {
 		if unicode.IsSpace(l.source[l.cursor]) {
 			l.cursor++
 			continue
+		} else if tok = l.parseString(); tok != nil {
 		} else if tok = l.parseNumber(); tok != nil {
 		} else if tok = l.parseOperator(); tok != nil {
 		} else if tok = l.parseIdent(); tok != nil {
@@ -147,4 +148,31 @@ func (l *lexer) parseIdent() *token {
 	}
 
 	return newToken(typ, string(ident))
+}
+
+func (l *lexer) parseString() *token {
+	var (
+		str         []rune
+		startCursor = l.cursor
+	)
+
+	if l.cursor >= len(l.source) || l.source[l.cursor] != '"' {
+		return nil
+	}
+
+	l.cursor++
+
+	for l.cursor < len(l.source) {
+		if l.source[l.cursor] == '"' {
+			l.cursor++
+			return newToken(stringType, string(str))
+		}
+
+		str = append(str, l.source[l.cursor])
+		l.cursor++
+	}
+
+	l.cursor = startCursor
+
+	return nil
 }

@@ -120,6 +120,9 @@ func (p *parser) parseLiteral() *node {
 		case numberType:
 			defer func() { p.cursor++ }()
 			return newNode(numberType, p.tokens[p.cursor].value)
+		case stringType:
+			defer func() { p.cursor++ }()
+			return newNode(stringType, p.tokens[p.cursor].value)
 		case identType:
 			defer func() { p.cursor++ }()
 			return newNode(identType, p.tokens[p.cursor].value)

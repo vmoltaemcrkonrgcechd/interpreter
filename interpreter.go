@@ -30,6 +30,9 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 	case numberType:
 		return newValue(numType, i.parseFloat(root.value), nil)
 
+	case stringType:
+		return newValue(strType, root.value, nil)
+
 	case identType:
 		val, ok := ctx.find(root.value)
 		if !ok {
@@ -38,6 +41,19 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 		return val
 
 	case addType:
+		op1 := i.interpret(root.children[0], ctx)
+		op2 := i.interpret(root.children[1], ctx)
+		switch {
+		case op1.typ == strType && op2.typ == strType:
+			return newValue(strType, op1.val.(string)+op2.val.(string), nil)
+		case op1.typ == numType && op2.typ == numType:
+			return newValue(numType, op1.val.(float64)+op2.val.(float64), nil)
+		case op1.typ == strType && op2.typ == numType:
+			return newValue(numType, op1.val.(string)+fmt.Sprintf("%f", op2.val.(float64)), nil)
+		case op1.typ == numType && op2.typ == strType:
+			return newValue(numType, fmt.Sprintf("%f", op1.val.(float64))+op2.val.(string), nil)
+		}
+
 		return newValue(numType, i.interpret(root.children[0], ctx).val.(float64)+i.interpret(root.children[1], ctx).val.(float64), nil)
 
 	case subType:
@@ -53,11 +69,20 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 		return newValue(numType, -i.interpret(root.children[0], ctx).val.(float64), nil)
 
 	case letType:
-		result := 0.0
+		var (
+			result any = 0.0
+			typ        = numType
+		)
 		if len(root.children) >= 1 {
-			result = i.interpret(root.children[0], ctx).val.(float64)
+			val := i.interpret(root.children[0], ctx)
+			typ = val.typ
+			if val.typ == strType {
+				result = val.val.(string)
+			} else {
+				result = val.val.(float64)
+			}
 		}
-		ctx.namespace[root.value] = newValue(numType, result, nil)
+		ctx.namespace[root.value] = newValue(typ, result, nil)
 		return nil
 
 	case assignType:
@@ -94,7 +119,7 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 						if parameter == nil {
 							continue
 						}
-						parameters = append(parameters, i.interpret(parameter, ctx).val.(float64))
+						parameters = append(parameters, i.interpret(parameter, ctx).val)
 					}
 				}
 

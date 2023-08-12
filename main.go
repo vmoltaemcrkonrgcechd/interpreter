@@ -6,16 +6,7 @@ import (
 
 func main() {
 	input := `
-let number = 1000;
-
-fun bar(number) {
-	write(number);
-	if number == 1000 {
-		bar(number - 100);
-	};
-};
-
-bar(number);
+write("Hello " + "World!");
 `
 
 	tokens, err := newLexer([]byte(input)).parse()
@@ -27,6 +18,5 @@ bar(number);
 }
 
 /*
-string
 ret
 */

@@ -15,6 +15,7 @@ const (
 
 	identType
 	numberType
+	stringType
 
 	addType
 	subType

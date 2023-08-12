@@ -2,6 +2,7 @@ package main
 
 const (
 	numType  = "number"
+	strType  = "string"
 	boolType = "bool"
 	funcType = "fun"
 )
