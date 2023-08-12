@@ -5,6 +5,12 @@ import (
 	"strconv"
 )
 
+var builtin = map[string]func(...any){
+	"write": func(args ...any) {
+		fmt.Println(args...)
+	},
+}
+
 type interpreter struct {
 }
 
@@ -18,10 +24,7 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 	case blockType:
 		newCtx := newContext(ctx)
 		for _, child := range root.children {
-			val := i.interpret(child, newCtx)
-			if val != nil {
-				fmt.Println(val.val)
-			}
+			i.interpret(child, newCtx)
 		}
 
 	case numberType:
@@ -81,6 +84,24 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 	case functionCallType:
 		fun, ok := ctx.find(root.value)
 		if !ok {
+			var builtinFun func(...any)
+			builtinFun, ok = builtin[root.value]
+			if ok {
+				var parameters []any
+
+				if len(root.children) == 1 {
+					for _, parameter := range root.children[0].children {
+						if parameter == nil {
+							continue
+						}
+						parameters = append(parameters, i.interpret(parameter, ctx).val.(float64))
+					}
+				}
+
+				builtinFun(parameters...)
+				return nil
+			}
+
 			panic("неизвестный идентификатор:" + root.value)
 		}
 
