@@ -24,7 +24,10 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 	case blockType:
 		newCtx := newContext(ctx)
 		for _, child := range root.children {
-			i.interpret(child, newCtx)
+			val := i.interpret(child, newCtx)
+			if val != nil && val.typ == retVal {
+				return val
+			}
 		}
 
 	case numberType:
@@ -49,9 +52,9 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 		case op1.typ == numType && op2.typ == numType:
 			return newValue(numType, op1.val.(float64)+op2.val.(float64), nil)
 		case op1.typ == strType && op2.typ == numType:
-			return newValue(numType, op1.val.(string)+fmt.Sprintf("%f", op2.val.(float64)), nil)
+			return newValue(strType, op1.val.(string)+fmt.Sprintf("%f", op2.val.(float64)), nil)
 		case op1.typ == numType && op2.typ == strType:
-			return newValue(numType, fmt.Sprintf("%f", op1.val.(float64))+op2.val.(string), nil)
+			return newValue(strType, fmt.Sprintf("%f", op1.val.(float64))+op2.val.(string), nil)
 		}
 
 		return newValue(numType, i.interpret(root.children[0], ctx).val.(float64)+i.interpret(root.children[1], ctx).val.(float64), nil)
@@ -96,15 +99,35 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 	case ifType:
 		result := i.interpret(root.children[0], ctx)
 		if result.val.(bool) {
-			i.interpret(root.children[1], ctx)
+			return i.interpret(root.children[1], ctx)
 		}
 
 	case eqlType:
-		result := i.interpret(root.children[0], ctx).val.(float64) == i.interpret(root.children[1], ctx).val.(float64)
+		op1 := i.interpret(root.children[0], ctx)
+		op2 := i.interpret(root.children[1], ctx)
+
+		result := op1.typ == op2.typ && op1.val == op2.val
+
 		return newValue(boolType, result, nil)
+
+	case leqType:
+		op1 := i.interpret(root.children[0], ctx)
+		op2 := i.interpret(root.children[1], ctx)
+
+		if op1.typ != numType || op2.typ != numType {
+			return newValue(boolType, false, nil)
+		}
+
+		return newValue(boolType, op1.val.(float64) <= op2.val.(float64), nil)
 
 	case funType:
 		ctx.namespace[root.value] = newValue(funcType, "", root.children[0], root.children[1])
+
+	case retType:
+		if len(root.children) == 1 {
+			return newValue(retVal, i.interpret(root.children[0], ctx), nil)
+		}
+		return newValue(retVal, 0, nil)
 
 	case functionCallType:
 		fun, ok := ctx.find(root.value)
@@ -141,7 +164,18 @@ func (i *interpreter) interpret(root *node, ctx *context) *value {
 			tempContext.namespace[arg.value] = newValue(numType, val, nil)
 		}
 
-		return i.interpret(fun.body, tempContext)
+		val := i.interpret(fun.body, tempContext)
+		if val != nil && val.typ == retVal {
+			_, ok = val.val.(*value)
+
+			if !ok {
+				return nil
+			}
+
+			return val.val.(*value)
+		}
+
+		return nil
 	}
 
 	return nil

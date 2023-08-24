@@ -97,7 +97,7 @@ label:
 			return tok
 
 		// символы, которые сами являются операторами, но также могут накапливаться.
-		case '+', '-', '*', '/', '=':
+		case '+', '-', '*', '/', '=', '<':
 			operator = append(operator, l.source[l.cursor])
 			l.cursor++
 

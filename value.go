@@ -5,6 +5,7 @@ const (
 	strType  = "string"
 	boolType = "bool"
 	funcType = "fun"
+	retVal   = "ret"
 )
 
 type value struct {

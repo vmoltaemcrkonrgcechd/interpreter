@@ -30,6 +30,8 @@ func (p *parser) parse() *node {
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseFunctionCall(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
+		} else if child = p.parseReturn(); child != nil && (p.cursor >= len(p.tokens) ||
+			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseBranching(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else if child = p.parseFunctionDeclaration(); child != nil && (p.cursor >= len(p.tokens) ||
@@ -39,7 +41,7 @@ func (p *parser) parse() *node {
 		} else if child = p.parseVariableDeclaration(); child != nil && (p.cursor >= len(p.tokens) ||
 			p.tokens[p.cursor].typ == semicolonType) {
 		} else {
-			panic("не удалось разобрать выражение: " + strconv.Itoa(p.cursor))
+			panic("не удалось разобрать выражение: " + strconv.Itoa(p.cursor) + p.tokens[p.cursor].value)
 		}
 
 		root.children = append(root.children, child)
@@ -108,6 +110,11 @@ func (p *parser) parseMulAndDiv() *node {
 
 func (p *parser) parseLiteral() *node {
 	if p.cursor < len(p.tokens) {
+		result := p.parseFunctionCall()
+		if result != nil {
+			return result
+		}
+
 		switch p.tokens[p.cursor].typ {
 		case lParenType:
 			p.cursor++
@@ -194,10 +201,12 @@ func (p *parser) parseCondition() *node {
 	startCursor := p.cursor
 
 	left := p.parseExpression()
-	if left == nil || p.cursor >= len(p.tokens) || p.tokens[p.cursor].typ != eqlType {
+	if left == nil || p.cursor >= len(p.tokens) || (p.tokens[p.cursor].typ != eqlType && p.tokens[p.cursor].typ != leqType) {
 		p.cursor = startCursor
 		return nil
 	}
+
+	typ := p.tokens[p.cursor].typ
 
 	p.cursor++
 
@@ -207,7 +216,7 @@ func (p *parser) parseCondition() *node {
 		return nil
 	}
 
-	return newNode(eqlType, "", left, right)
+	return newNode(typ, "", left, right)
 }
 
 func (p *parser) parseBranching() *node {
@@ -231,7 +240,7 @@ func (p *parser) parseBranching() *node {
 			return nil
 		}
 		p.cursor++
-		return newNode(ifType, "", condition, body)
+		return newNode(ifType, "ifType", condition, body)
 	}
 	return nil
 }
@@ -286,7 +295,7 @@ func (p *parser) parseFunctionDeclaration() *node {
 func (p *parser) parseFunctionCall() *node {
 	startCursor := p.cursor
 
-	if p.tokens[p.cursor].typ == identType && p.tokens[p.cursor+1].typ == lParenType {
+	if p.cursor+2 < len(p.tokens) && p.tokens[p.cursor].typ == identType && p.tokens[p.cursor+1].typ == lParenType {
 		root := newNode(functionCallType, p.tokens[p.cursor].value)
 		p.cursor += 2
 
@@ -357,6 +366,22 @@ func (p *parser) parseParameters() *node {
 		}
 
 		p.cursor++
+	}
+
+	return nil
+}
+
+func (p *parser) parseReturn() *node {
+	if p.tokens[p.cursor].typ == retType {
+		p.cursor++
+
+		if p.cursor < len(p.tokens) {
+			expression := p.parseExpression()
+			if expression == nil {
+				return newNode(retType, "")
+			}
+			return newNode(retType, "", expression)
+		}
 	}
 
 	return nil

@@ -1,0 +1,28 @@
+
+
+write("Hello " + "World!");
+
+fun factorial(n) {
+	if n <= 1 {
+		ret 1;
+	};
+
+	ret factorial(n - 1) * n;
+};
+
+write(factorial(5));
+
+fun fibonacci(n) {
+	if n == 1 { ret 1; };
+
+	if n == 2 { ret 1; };
+
+	ret fibonacci(n - 1) + fibonacci(n - 2);
+};
+
+
+write(fibonacci(10));
+
+let number = (factorial(5) + fibonacci(5)) / 10 * 2 + "!";
+
+write(number);

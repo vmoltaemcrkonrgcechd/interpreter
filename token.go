@@ -27,6 +27,7 @@ const (
 	lBraceType
 	rBraceType
 	eqlType
+	leqType
 	semicolonType
 	commaType
 
@@ -35,6 +36,7 @@ const (
 	letType
 	ifType
 	funType
+	retType
 	functionCallType
 	argumentsType
 )
@@ -52,10 +54,12 @@ var operators = map[string]int{
 	"}":  rBraceType,
 	",":  commaType,
 	"==": eqlType,
+	"<=": leqType,
 }
 
 var keywords = map[string]int{
 	"let": letType,
 	"if":  ifType,
 	"fun": funType,
+	"ret": retType,
 }

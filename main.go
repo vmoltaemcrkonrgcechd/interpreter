@@ -2,21 +2,19 @@ package main
 
 import (
 	"log"
+	"os"
 )
 
 func main() {
-	input := `
-write("Hello " + "World!");
-`
+	input, err := os.ReadFile(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	tokens, err := newLexer([]byte(input)).parse()
+	tokens, err := newLexer(input).parse()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	newInterpreter().interpret(newParser(tokens).parse(), nil)
 }
-
-/*
-ret
-*/
